@@ -5,7 +5,7 @@ import com.gaurav.internship.sms.model.Student;
 
 import java.util.List;
 
-// ABSTRACTION: defines the contract for student operations, independent of storage details
+
 public interface StudentService {
     void addStudent(Student student);
     List<Student> viewAllStudents();

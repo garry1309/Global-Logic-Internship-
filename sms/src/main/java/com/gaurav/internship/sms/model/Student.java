@@ -1,6 +1,5 @@
 package com.gaurav.internship.sms.model;
 
-// ENCAPSULATION: private fields, controlled access via getters/setters
 public class Student {
 
     private int id;

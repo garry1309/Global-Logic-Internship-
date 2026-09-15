@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// implements StudentService: provides the real logic behind the abstract contract
+
 public class StudentServiceImpl implements StudentService {
 
-    // COLLECTIONS: HashMap gives O(1) lookup by student ID
+
     private final Map<Integer, Student> studentMap = new HashMap<>();
 
     @Override
@@ -36,8 +36,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public void updateStudent(int id, String name, int age, String course, double grade)
             throws StudentNotFoundException {
-        Student student = searchStudent(id); // reuses search, throws if not found
-        student.setName(name);
+        Student student = searchStudent(id);
         student.setAge(age);
         student.setCourse(course);
         student.setGrade(grade);

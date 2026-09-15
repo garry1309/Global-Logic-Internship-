@@ -40,7 +40,7 @@ public class Main {
             } catch (StudentNotFoundException e) {
                 System.out.println("Not found: " + e.getMessage());
             } catch (Exception e) {
-                // Catch-all safety net so a bad input never crashes the whole app
+
                 System.out.println("Unexpected error: " + e.getMessage());
             }
             System.out.println();
@@ -105,7 +105,7 @@ public class Main {
         System.out.println("Student deleted successfully.");
     }
 
-    // ---- Input helpers with exception handling ----
+    
 
     private static int readInt(String prompt) {
         System.out.print(prompt);
