@@ -1,0 +1,40 @@
+digraph ER {
+  graph [rankdir=LR, bgcolor="white", pad=0.4, nodesep=0.8, ranksep=1.6, fontname="Helvetica"];
+  node  [shape=plain, fontname="Helvetica", fontsize=12];
+  edge  [fontname="Helvetica", fontsize=11, color="#444444", penwidth=1.6];
+
+  Student [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#F7FAFF">
+      <TR><TD COLSPAN="3" BGCOLOR="#2F5D9B"><FONT COLOR="white"><B>Student</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>PK</B></TD><TD ALIGN="LEFT"><B>student_id</B></TD><TD ALIGN="LEFT" PORT="id">INT</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">first_name</TD><TD ALIGN="LEFT">VARCHAR(50)</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">last_name</TD><TD ALIGN="LEFT">VARCHAR(50)</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ</TD><TD ALIGN="LEFT">email</TD><TD ALIGN="LEFT">VARCHAR(100)</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">date_of_birth</TD><TD ALIGN="LEFT">DATE</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">enrollment_date</TD><TD ALIGN="LEFT">DATE</TD></TR>
+    </TABLE>>];
+
+  Enrollment [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#FFFBF2">
+      <TR><TD COLSPAN="3" BGCOLOR="#B8741A"><FONT COLOR="white"><B>Enrollment</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>PK</B></TD><TD ALIGN="LEFT"><B>enrollment_id</B></TD><TD ALIGN="LEFT">INT</TD></TR>
+      <TR><TD ALIGN="LEFT" PORT="sid"><B>FK</B></TD><TD ALIGN="LEFT">student_id</TD><TD ALIGN="LEFT">INT</TD></TR>
+      <TR><TD ALIGN="LEFT" PORT="cid"><B>FK</B></TD><TD ALIGN="LEFT">course_id</TD><TD ALIGN="LEFT">INT</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">enrollment_date</TD><TD ALIGN="LEFT">DATE</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">grade</TD><TD ALIGN="LEFT">DECIMAL(5,2) NULL</TD></TR>
+      <TR><TD COLSPAN="3" ALIGN="LEFT"><FONT POINT-SIZE="10">UNIQUE (student_id, course_id)</FONT></TD></TR>
+    </TABLE>>];
+
+  Course [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="#F4FBF6">
+      <TR><TD COLSPAN="3" BGCOLOR="#2E7D4F"><FONT COLOR="white"><B>Course</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>PK</B></TD><TD ALIGN="LEFT"><B>course_id</B></TD><TD ALIGN="LEFT" PORT="id">INT</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">course_name</TD><TD ALIGN="LEFT">VARCHAR(100)</TD></TR>
+      <TR><TD ALIGN="LEFT">UQ</TD><TD ALIGN="LEFT">course_code</TD><TD ALIGN="LEFT">VARCHAR(10)</TD></TR>
+      <TR><TD></TD><TD ALIGN="LEFT">credits</TD><TD ALIGN="LEFT">INT (1-6)</TD></TR>
+    </TABLE>>];
+
+  // one Student -> many Enrollment ; one Course -> many Enrollment
+  Student:id:e -> Enrollment:sid:w [dir=both, arrowtail=tee,  arrowhead=crow, label="  1 : N  "];
+  Course:id:e  -> Enrollment:cid:w [dir=both, arrowtail=tee,  arrowhead=crow, label="  1 : N  "];
+}

@@ -1,0 +1,618 @@
+SAMPLE OUTPUT - Student Management System
+Produced by running student_management.sql from top to bottom on a fresh database
+(MariaDB 10.11, a MySQL-compatible server). Your values will match, except the
+enrollment_date created by sp_add_enrollment, which uses today's date (CURDATE()).
+================================================================================
+
+-- ---- READ: all student records
+SELECT * FROM Student
++------------+------------+-----------+--------------------------+---------------+-----------------+
+| student_id | first_name | last_name | email                    | date_of_birth | enrollment_date |
++------------+------------+-----------+--------------------------+---------------+-----------------+
+|          1 | Aarav      | Sharma    | aarav.sharma@example.com | 2003-04-12    | 2023-07-15      |
+|          2 | Priya      | Verma     | priya.verma@example.com  | 2002-11-05    | 2023-07-15      |
+|          3 | Rohan      | Mehta     | rohan.mehta@example.com  | 2003-01-23    | 2023-07-20      |
+|          4 | Ananya     | Singh     | ananya.singh@example.com | 2004-03-17    | 2024-07-10      |
+|          5 | Karan      | Patel     | karan.patel@example.com  | 2002-08-30    | 2022-07-18      |
+|          6 | Sneha      | Iyer      | sneha.iyer@example.com   | 2003-06-09    | 2023-07-22      |
+|          7 | Vikram     | Rao       | vikram.rao@example.com   | 2001-12-14    | 2022-07-18      |
+|          8 | Neha       | Gupta     | neha.gupta@example.com   | 2004-02-27    | 2024-07-12      |
+|          9 | Arjun      | Nair      | arjun.nair@example.com   | 2003-09-19    | 2023-07-25      |
+|         10 | Divya      | Reddy     | divya.reddy@example.com  | 2002-05-02    | 2022-07-20      |
+|         11 | Rahul      | Joshi     | rahul.joshi@example.com  | 2004-10-11    | 2024-07-15      |
+|         12 | Meera      | Kapoor    | meera.kapoor@example.com | 2003-07-07    | 2024-07-15      |
++------------+------------+-----------+--------------------------+---------------+-----------------+
+12 rows in set (0.000 sec)
+-- ---- READ: students enrolled in a specific course (Database Systems, DBS101)
+SELECT s.student_id, s.first_name, s.last_name, s.email, e.grade
+FROM Student s
+INNER JOIN Enrollment e ON e.student_id = s.student_id
+INNER JOIN Course c     ON c.course_id  = e.course_id
+WHERE c.course_code = 'DBS101'
+ORDER BY s.last_name
++------------+------------+-----------+--------------------------+-------+
+| student_id | first_name | last_name | email                    | grade |
++------------+------------+-----------+--------------------------+-------+
+|          3 | Rohan      | Mehta     | rohan.mehta@example.com  | 72.00 |
+|          5 | Karan      | Patel     | karan.patel@example.com  | 64.00 |
+|          1 | Aarav      | Sharma    | aarav.sharma@example.com | 88.50 |
+|          2 | Priya      | Verma     | priya.verma@example.com  | 95.00 |
++------------+------------+-----------+--------------------------+-------+
+4 rows in set (0.000 sec)
+-- ---- UPDATE: change a student's email address
+SELECT student_id, email FROM Student WHERE student_id = 3   -- before
++------------+-------------------------+
+| student_id | email                   |
++------------+-------------------------+
+|          3 | rohan.mehta@example.com |
++------------+-------------------------+
+1 row in set (0.000 sec)
+UPDATE Student
+SET    email = 'rohan.mehta@university.edu'
+WHERE  student_id = 3
+Rows matched: 1  Changed: 1  Warnings: 0
+SELECT student_id, email FROM Student WHERE student_id = 3   -- after
++------------+----------------------------+
+| student_id | email                      |
++------------+----------------------------+
+|          3 | rohan.mehta@university.edu |
++------------+----------------------------+
+1 row in set (0.000 sec)
+-- ---- DELETE: remove one enrollment record (Divya Reddy leaves Machine Learning)
+SELECT COUNT(*) AS enrollments_before_delete FROM Enrollment
++---------------------------+
+| enrollments_before_delete |
++---------------------------+
+|                        20 |
++---------------------------+
+1 row in set (0.000 sec)
+DELETE FROM Enrollment
+WHERE  student_id = 10 AND course_id = 6
+SELECT COUNT(*) AS enrollments_after_delete FROM Enrollment
++--------------------------+
+| enrollments_after_delete |
++--------------------------+
+|                       19 |
++--------------------------+
+1 row in set (0.000 sec)
+-- ---- READ: students sorted by enrollment date (oldest first)
+SELECT student_id, first_name, last_name, enrollment_date
+FROM   Student
+ORDER BY enrollment_date ASC, last_name ASC
++------------+------------+-----------+-----------------+
+| student_id | first_name | last_name | enrollment_date |
++------------+------------+-----------+-----------------+
+|          5 | Karan      | Patel     | 2022-07-18      |
+|          7 | Vikram     | Rao       | 2022-07-18      |
+|         10 | Divya      | Reddy     | 2022-07-20      |
+|          1 | Aarav      | Sharma    | 2023-07-15      |
+|          2 | Priya      | Verma     | 2023-07-15      |
+|          3 | Rohan      | Mehta     | 2023-07-20      |
+|          6 | Sneha      | Iyer      | 2023-07-22      |
+|          9 | Arjun      | Nair      | 2023-07-25      |
+|          4 | Ananya     | Singh     | 2024-07-10      |
+|          8 | Neha       | Gupta     | 2024-07-12      |
+|         11 | Rahul      | Joshi     | 2024-07-15      |
+|         12 | Meera      | Kapoor    | 2024-07-15      |
++------------+------------+-----------+-----------------+
+12 rows in set (0.000 sec)
+-- =====================================================================
+--  TASK 3: DATA RETRIEVAL AND JOINS
+-- =====================================================================
+-- 3.1  Students along with their enrolled courses (one row per enrollment)
+SELECT s.student_id,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       c.course_code,
+       c.course_name
+FROM Student s
+INNER JOIN Enrollment e ON e.student_id = s.student_id
+INNER JOIN Course c     ON c.course_id  = e.course_id
+ORDER BY s.student_id, c.course_code
++------------+--------------+-------------+-------------------+
+| student_id | student_name | course_code | course_name       |
++------------+--------------+-------------+-------------------+
+|          1 | Aarav Sharma | DBS101      | Database Systems  |
+|          1 | Aarav Sharma | DSA201      | Data Structures   |
+|          1 | Aarav Sharma | JAV102      | Java Programming  |
+|          2 | Priya Verma  | DBS101      | Database Systems  |
+|          2 | Priya Verma  | JAV102      | Java Programming  |
+|          3 | Rohan Mehta  | DBS101      | Database Systems  |
+|          3 | Rohan Mehta  | WEB202      | Web Development   |
+|          4 | Ananya Singh | DSA201      | Data Structures   |
+|          4 | Ananya Singh | JAV102      | Java Programming  |
+|          5 | Karan Patel  | DBS101      | Database Systems  |
+|          5 | Karan Patel  | OPS301      | Operating Systems |
+|          6 | Sneha Iyer   | JAV102      | Java Programming  |
+|          6 | Sneha Iyer   | WEB202      | Web Development   |
+|          7 | Vikram Rao   | DSA201      | Data Structures   |
+|          7 | Vikram Rao   | OPS301      | Operating Systems |
+|          8 | Neha Gupta   | WEB202      | Web Development   |
+|          9 | Arjun Nair   | DSA201      | Data Structures   |
+|          9 | Arjun Nair   | MLN401      | Machine Learning  |
+|         10 | Divya Reddy  | OPS301      | Operating Systems |
++------------+--------------+-------------+-------------------+
+19 rows in set (0.000 sec)
+-- 3.1 (alternative) one row per student with all courses in a single column
+SELECT s.student_id,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       GROUP_CONCAT(c.course_code ORDER BY c.course_code SEPARATOR ', ') AS courses
+FROM Student s
+INNER JOIN Enrollment e ON e.student_id = s.student_id
+INNER JOIN Course c     ON c.course_id  = e.course_id
+GROUP BY s.student_id, s.first_name, s.last_name
+ORDER BY s.student_id
++------------+--------------+------------------------+
+| student_id | student_name | courses                |
++------------+--------------+------------------------+
+|          1 | Aarav Sharma | DBS101, DSA201, JAV102 |
+|          2 | Priya Verma  | DBS101, JAV102         |
+|          3 | Rohan Mehta  | DBS101, WEB202         |
+|          4 | Ananya Singh | DSA201, JAV102         |
+|          5 | Karan Patel  | DBS101, OPS301         |
+|          6 | Sneha Iyer   | JAV102, WEB202         |
+|          7 | Vikram Rao   | DSA201, OPS301         |
+|          8 | Neha Gupta   | WEB202                 |
+|          9 | Arjun Nair   | DSA201, MLN401         |
+|         10 | Divya Reddy  | OPS301                 |
++------------+--------------+------------------------+
+10 rows in set (0.000 sec)
+-- 3.2  Number of students enrolled in each course
+--      (LEFT JOIN keeps courses with zero students; COUNT(e.col) ignores NULLs)
+SELECT c.course_code,
+       c.course_name,
+       COUNT(e.enrollment_id) AS students_enrolled
+FROM Course c
+LEFT JOIN Enrollment e ON e.course_id = c.course_id
+GROUP BY c.course_id, c.course_code, c.course_name
+ORDER BY students_enrolled DESC, c.course_code
++-------------+-------------------+-------------------+
+| course_code | course_name       | students_enrolled |
++-------------+-------------------+-------------------+
+| DBS101      | Database Systems  |                 4 |
+| DSA201      | Data Structures   |                 4 |
+| JAV102      | Java Programming  |                 4 |
+| OPS301      | Operating Systems |                 3 |
+| WEB202      | Web Development   |                 3 |
+| MLN401      | Machine Learning  |                 1 |
+| CLD302      | Cloud Computing   |                 0 |
++-------------+-------------------+-------------------+
+7 rows in set (0.000 sec)
+-- 3.3  Courses having more than two enrolled students
+--      (HAVING filters AFTER grouping; WHERE cannot use COUNT)
+SELECT c.course_code,
+       c.course_name,
+       COUNT(e.enrollment_id) AS students_enrolled
+FROM Course c
+INNER JOIN Enrollment e ON e.course_id = c.course_id
+GROUP BY c.course_id, c.course_code, c.course_name
+HAVING COUNT(e.enrollment_id) > 2
+ORDER BY students_enrolled DESC, c.course_code
++-------------+-------------------+-------------------+
+| course_code | course_name       | students_enrolled |
++-------------+-------------------+-------------------+
+| DBS101      | Database Systems  |                 4 |
+| DSA201      | Data Structures   |                 4 |
+| JAV102      | Java Programming  |                 4 |
+| OPS301      | Operating Systems |                 3 |
+| WEB202      | Web Development   |                 3 |
++-------------+-------------------+-------------------+
+5 rows in set (0.000 sec)
+-- 3.4  Students who are not enrolled in any course
+SELECT s.student_id, s.first_name, s.last_name, s.email
+FROM Student s
+LEFT JOIN Enrollment e ON e.student_id = s.student_id
+WHERE e.enrollment_id IS NULL
++------------+------------+-----------+--------------------------+
+| student_id | first_name | last_name | email                    |
++------------+------------+-----------+--------------------------+
+|         11 | Rahul      | Joshi     | rahul.joshi@example.com  |
+|         12 | Meera      | Kapoor    | meera.kapoor@example.com |
++------------+------------+-----------+--------------------------+
+2 rows in set (0.000 sec)
+-- 3.5  Highest grade achieved in each course
+SELECT c.course_code,
+       c.course_name,
+       MAX(e.grade) AS highest_grade
+FROM Course c
+LEFT JOIN Enrollment e ON e.course_id = c.course_id
+GROUP BY c.course_id, c.course_code, c.course_name
+ORDER BY c.course_code
++-------------+-------------------+---------------+
+| course_code | course_name       | highest_grade |
++-------------+-------------------+---------------+
+| CLD302      | Cloud Computing   |          NULL |
+| DBS101      | Database Systems  |         95.00 |
+| DSA201      | Data Structures   |         89.00 |
+| JAV102      | Java Programming  |         92.00 |
+| MLN401      | Machine Learning  |          NULL |
+| OPS301      | Operating Systems |         91.00 |
+| WEB202      | Web Development   |         83.50 |
++-------------+-------------------+---------------+
+7 rows in set (0.000 sec)
+-- 3.5 (bonus) who achieved that highest grade
+SELECT c.course_code,
+       CONCAT(s.first_name, ' ', s.last_name) AS top_student,
+       e.grade
+FROM Enrollment e
+INNER JOIN Student s ON s.student_id = e.student_id
+INNER JOIN Course c  ON c.course_id  = e.course_id
+WHERE e.grade = (SELECT MAX(e2.grade)
+                 FROM Enrollment e2
+                 WHERE e2.course_id = e.course_id)
+ORDER BY c.course_code
++-------------+--------------+-------+
+| course_code | top_student  | grade |
++-------------+--------------+-------+
+| DBS101      | Priya Verma  | 95.00 |
+| DSA201      | Arjun Nair   | 89.00 |
+| JAV102      | Aarav Sharma | 92.00 |
+| OPS301      | Vikram Rao   | 91.00 |
+| WEB202      | Neha Gupta   | 83.50 |
++-------------+--------------+-------+
+5 rows in set (0.000 sec)
+-- =====================================================================
+--  TASK 4: SQL VIEW
+-- =====================================================================
+SELECT CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       c.course_name                          AS course_name,
+       e.enrollment_date                      AS enrollment_date,
+       e.grade                                AS grade
+FROM Enrollment e
+INNER JOIN Student s ON s.student_id = e.student_id
+INNER JOIN Course c  ON c.course_id  = e.course_id
+-- Query the view: everything
+SELECT * FROM vw_student_course_details
+ORDER BY student_name, course_name
++--------------+-------------------+-----------------+-------+
+| student_name | course_name       | enrollment_date | grade |
++--------------+-------------------+-----------------+-------+
+| Aarav Sharma | Data Structures   | 2023-08-02      | 79.00 |
+| Aarav Sharma | Database Systems  | 2023-08-01      | 88.50 |
+| Aarav Sharma | Java Programming  | 2023-08-01      | 92.00 |
+| Ananya Singh | Data Structures   | 2024-08-05      | 81.00 |
+| Ananya Singh | Java Programming  | 2024-08-05      | 90.00 |
+| Arjun Nair   | Data Structures   | 2023-08-05      | 89.00 |
+| Arjun Nair   | Machine Learning  | 2023-08-05      |  NULL |
+| Divya Reddy  | Operating Systems | 2022-08-04      | 58.00 |
+| Karan Patel  | Database Systems  | 2022-08-01      | 64.00 |
+| Karan Patel  | Operating Systems | 2022-08-02      | 70.50 |
+| Neha Gupta   | Web Development   | 2024-08-06      | 83.50 |
+| Priya Verma  | Database Systems  | 2023-08-01      | 95.00 |
+| Priya Verma  | Java Programming  | 2023-08-02      | 85.50 |
+| Rohan Mehta  | Database Systems  | 2023-08-03      | 72.00 |
+| Rohan Mehta  | Web Development   | 2023-08-03      | 68.50 |
+| Sneha Iyer   | Java Programming  | 2023-08-04      | 87.00 |
+| Sneha Iyer   | Web Development   | 2023-08-04      |  NULL |
+| Vikram Rao   | Data Structures   | 2022-08-03      | 76.00 |
+| Vikram Rao   | Operating Systems | 2022-08-03      | 91.00 |
++--------------+-------------------+-----------------+-------+
+19 rows in set (0.000 sec)
+-- Query the view: one student
+SELECT * FROM vw_student_course_details
+WHERE student_name = 'Aarav Sharma'
++--------------+------------------+-----------------+-------+
+| student_name | course_name      | enrollment_date | grade |
++--------------+------------------+-----------------+-------+
+| Aarav Sharma | Database Systems | 2023-08-01      | 88.50 |
+| Aarav Sharma | Java Programming | 2023-08-01      | 92.00 |
+| Aarav Sharma | Data Structures  | 2023-08-02      | 79.00 |
++--------------+------------------+-----------------+-------+
+3 rows in set (0.000 sec)
+-- Query the view: high achievers (grade 85 or above)
+SELECT student_name, course_name, grade
+FROM vw_student_course_details
+WHERE grade >= 85
+ORDER BY grade DESC
++--------------+-------------------+-------+
+| student_name | course_name       | grade |
++--------------+-------------------+-------+
+| Priya Verma  | Database Systems  | 95.00 |
+| Aarav Sharma | Java Programming  | 92.00 |
+| Vikram Rao   | Operating Systems | 91.00 |
+| Ananya Singh | Java Programming  | 90.00 |
+| Arjun Nair   | Data Structures   | 89.00 |
+| Aarav Sharma | Database Systems  | 88.50 |
+| Sneha Iyer   | Java Programming  | 87.00 |
+| Priya Verma  | Java Programming  | 85.50 |
++--------------+-------------------+-------+
+8 rows in set (0.000 sec)
+-- Query the view: average grade per course (graded enrollments only)
+SELECT course_name, ROUND(AVG(grade), 2) AS average_grade
+FROM vw_student_course_details
+GROUP BY course_name
+ORDER BY average_grade DESC
++-------------------+---------------+
+| course_name       | average_grade |
++-------------------+---------------+
+| Java Programming  |         88.63 |
+| Data Structures   |         81.25 |
+| Database Systems  |         79.88 |
+| Web Development   |         76.00 |
+| Operating Systems |         73.17 |
+| Machine Learning  |          NULL |
++-------------------+---------------+
+6 rows in set (0.000 sec)
+-- Verification: the view must return exactly one row per enrollment
+SELECT (SELECT COUNT(*) FROM vw_student_course_details) AS rows_in_view,
+       (SELECT COUNT(*) FROM Enrollment)                AS rows_in_enrollment
++--------------+--------------------+
+| rows_in_view | rows_in_enrollment |
++--------------+--------------------+
+|           19 |                 19 |
++--------------+--------------------+
+1 row in set (0.000 sec)
+-- =====================================================================
+--  TASK 5: USER DEFINED FUNCTION
+-- =====================================================================
+RETURNS INT
+READS SQL DATA
+BEGIN
+    DECLARE v_count INT;
+    SELECT COUNT(*)
+    INTO   v_count
+    FROM   Enrollment
+    WHERE  student_id = p_student_id;
+    RETURN v_count;
+END
+-- Demonstration with sample inputs
+SELECT fn_student_course_count(1)   AS courses_of_student_1      -- enrolled in 3
++----------------------+
+| courses_of_student_1 |
++----------------------+
+|                    3 |
++----------------------+
+1 row in set (0.000 sec)
+SELECT fn_student_course_count(11)  AS courses_of_student_11     -- enrolled in none -> 0
++-----------------------+
+| courses_of_student_11 |
++-----------------------+
+|                     0 |
++-----------------------+
+1 row in set (0.000 sec)
+SELECT fn_student_course_count(999) AS courses_of_unknown_student -- no such student -> 0
++----------------------------+
+| courses_of_unknown_student |
++----------------------------+
+|                          0 |
++----------------------------+
+1 row in set (0.000 sec)
+-- The function used inside a query for every student
+SELECT student_id,
+       CONCAT(first_name, ' ', last_name)   AS student_name,
+       fn_student_course_count(student_id)  AS total_courses
+FROM   Student
+ORDER BY total_courses DESC, student_id
++------------+--------------+---------------+
+| student_id | student_name | total_courses |
++------------+--------------+---------------+
+|          1 | Aarav Sharma |             3 |
+|          2 | Priya Verma  |             2 |
+|          3 | Rohan Mehta  |             2 |
+|          4 | Ananya Singh |             2 |
+|          5 | Karan Patel  |             2 |
+|          6 | Sneha Iyer   |             2 |
+|          7 | Vikram Rao   |             2 |
+|          9 | Arjun Nair   |             2 |
+|          8 | Neha Gupta   |             1 |
+|         10 | Divya Reddy  |             1 |
+|         11 | Rahul Joshi  |             0 |
+|         12 | Meera Kapoor |             0 |
++------------+--------------+---------------+
+12 rows in set (0.000 sec)
+-- =====================================================================
+--  TASK 6: STORED PROCEDURES
+-- =====================================================================
+-- ---------------------------------------------------------------------
+-- sp_get_student_courses(student_id): all courses of a given student
+-- ---------------------------------------------------------------------
+BEGIN
+    SELECT c.course_id,
+           c.course_code,
+           c.course_name,
+           c.credits,
+           e.enrollment_date,
+           e.grade
+    FROM   Enrollment e
+    INNER JOIN Course c ON c.course_id = e.course_id
+    WHERE  e.student_id = p_student_id
+    ORDER BY c.course_code;
+END
+-- ---------------------------------------------------------------------
+-- sp_add_enrollment(student_id, course_id): enrol a student in a course.
+-- Validates the input and raises a clear error instead of a raw FK error.
+-- ---------------------------------------------------------------------
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Student WHERE student_id = p_student_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Student does not exist';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM Course WHERE course_id = p_course_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Course does not exist';
+    END IF;
+    IF EXISTS (SELECT 1 FROM Enrollment
+               WHERE student_id = p_student_id AND course_id = p_course_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Student is already enrolled in this course';
+    END IF;
+    INSERT INTO Enrollment (student_id, course_id, enrollment_date, grade)
+    VALUES (p_student_id, p_course_id, CURDATE(), NULL);
+    SELECT LAST_INSERT_ID() AS new_enrollment_id,
+           'Enrollment created successfully' AS message;
+END
+-- Execute sp_get_student_courses
+CALL sp_get_student_courses(1)
++-----------+-------------+------------------+---------+-----------------+-------+
+| course_id | course_code | course_name      | credits | enrollment_date | grade |
++-----------+-------------+------------------+---------+-----------------+-------+
+|         1 | DBS101      | Database Systems |       4 | 2023-08-01      | 88.50 |
+|         2 | DSA201      | Data Structures  |       4 | 2023-08-02      | 79.00 |
+|         3 | JAV102      | Java Programming |       3 | 2023-08-01      | 92.00 |
++-----------+-------------+------------------+---------+-----------------+-------+
+3 rows in set (0.000 sec)
+CALL sp_get_student_courses(11)     -- student with no courses: empty result
+Empty set (0.000 sec)
+-- Execute sp_add_enrollment: enrol Priya Verma (2) in Operating Systems (5)
+CALL sp_get_student_courses(2)      -- before
++-----------+-------------+------------------+---------+-----------------+-------+
+| course_id | course_code | course_name      | credits | enrollment_date | grade |
++-----------+-------------+------------------+---------+-----------------+-------+
+|         1 | DBS101      | Database Systems |       4 | 2023-08-01      | 95.00 |
+|         3 | JAV102      | Java Programming |       3 | 2023-08-02      | 85.50 |
++-----------+-------------+------------------+---------+-----------------+-------+
+2 rows in set (0.000 sec)
+CALL sp_add_enrollment(2, 5)
++-------------------+---------------------------------+
+| new_enrollment_id | message                         |
++-------------------+---------------------------------+
+|                21 | Enrollment created successfully |
++-------------------+---------------------------------+
+1 row in set (0.001 sec)
+CALL sp_get_student_courses(2)      -- after: OPS301 is now listed
++-----------+-------------+-------------------+---------+-----------------+-------+
+| course_id | course_code | course_name       | credits | enrollment_date | grade |
++-----------+-------------+-------------------+---------+-----------------+-------+
+|         1 | DBS101      | Database Systems  |       4 | 2023-08-01      | 95.00 |
+|         3 | JAV102      | Java Programming  |       3 | 2023-08-02      | 85.50 |
+|         5 | OPS301      | Operating Systems |       4 | 2026-10-30      |  NULL |
++-----------+-------------+-------------------+---------+-----------------+-------+
+3 rows in set (0.000 sec)
+-- Error handling demonstrations (uncomment ONE at a time to see the message;
+-- each one stops a script run, which is why they are commented out):
+-- CALL sp_add_enrollment(2, 5);     -- ERROR: Student is already enrolled in this course
+-- CALL sp_add_enrollment(999, 1);   -- ERROR: Student does not exist
+-- CALL sp_add_enrollment(1, 999);   -- ERROR: Course does not exist
+-- =====================================================================
+--  TASK 7: ADVANCED QUERYING
+--  (GROUP BY, HAVING, subqueries, INNER JOIN, LEFT JOIN)
+-- =====================================================================
+-- 7.1  Students enrolled in more than one course  (GROUP BY + HAVING + INNER JOIN)
+SELECT s.student_id,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       COUNT(e.enrollment_id)                 AS courses_enrolled
+FROM Student s
+INNER JOIN Enrollment e ON e.student_id = s.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+HAVING COUNT(e.enrollment_id) > 1
+ORDER BY courses_enrolled DESC, s.student_id
++------------+--------------+------------------+
+| student_id | student_name | courses_enrolled |
++------------+--------------+------------------+
+|          1 | Aarav Sharma |                3 |
+|          2 | Priya Verma  |                3 |
+|          3 | Rohan Mehta  |                2 |
+|          4 | Ananya Singh |                2 |
+|          5 | Karan Patel  |                2 |
+|          6 | Sneha Iyer   |                2 |
+|          7 | Vikram Rao   |                2 |
+|          9 | Arjun Nair   |                2 |
++------------+--------------+------------------+
+8 rows in set (0.000 sec)
+-- 7.2  Courses with above-average enrollment count
+--      (LEFT JOIN so empty courses count as 0 in the average; subquery in HAVING)
+SELECT c.course_code,
+       c.course_name,
+       COUNT(e.enrollment_id) AS students_enrolled
+FROM Course c
+LEFT JOIN Enrollment e ON e.course_id = c.course_id
+GROUP BY c.course_id, c.course_code, c.course_name
+HAVING COUNT(e.enrollment_id) > (
+        SELECT AVG(per_course.cnt)
+        FROM (SELECT COUNT(e2.enrollment_id) AS cnt
+              FROM Course c2
+              LEFT JOIN Enrollment e2 ON e2.course_id = c2.course_id
+              GROUP BY c2.course_id) AS per_course)
+ORDER BY students_enrolled DESC, c.course_code
++-------------+-------------------+-------------------+
+| course_code | course_name       | students_enrolled |
++-------------+-------------------+-------------------+
+| DBS101      | Database Systems  |                 4 |
+| DSA201      | Data Structures   |                 4 |
+| JAV102      | Java Programming  |                 4 |
+| OPS301      | Operating Systems |                 4 |
+| WEB202      | Web Development   |                 3 |
++-------------+-------------------+-------------------+
+5 rows in set (0.000 sec)
+-- 7.3  Students whose average grade is higher than the overall average grade
+--      (subquery in HAVING; AVG ignores NULL grades)
+SELECT s.student_id,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       ROUND(AVG(e.grade), 2)                 AS student_average,
+       (SELECT ROUND(AVG(grade), 2) FROM Enrollment) AS overall_average
+FROM Student s
+INNER JOIN Enrollment e ON e.student_id = s.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+HAVING AVG(e.grade) > (SELECT AVG(grade) FROM Enrollment)
+ORDER BY student_average DESC
++------------+--------------+-----------------+-----------------+
+| student_id | student_name | student_average | overall_average |
++------------+--------------+-----------------+-----------------+
+|          2 | Priya Verma  |           90.25 |           80.62 |
+|          9 | Arjun Nair   |           89.00 |           80.62 |
+|          6 | Sneha Iyer   |           87.00 |           80.62 |
+|          1 | Aarav Sharma |           86.50 |           80.62 |
+|          4 | Ananya Singh |           85.50 |           80.62 |
+|          7 | Vikram Rao   |           83.50 |           80.62 |
+|          8 | Neha Gupta   |           83.50 |           80.62 |
++------------+--------------+-----------------+-----------------+
+7 rows in set (0.000 sec)
+-- 7.4  LEFT JOIN: every student with a course count, including students with 0
+SELECT s.student_id,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       COUNT(e.enrollment_id)                 AS courses_enrolled
+FROM Student s
+LEFT JOIN Enrollment e ON e.student_id = s.student_id
+GROUP BY s.student_id, s.first_name, s.last_name
+ORDER BY courses_enrolled, s.student_id
++------------+--------------+------------------+
+| student_id | student_name | courses_enrolled |
++------------+--------------+------------------+
+|         11 | Rahul Joshi  |                0 |
+|         12 | Meera Kapoor |                0 |
+|          8 | Neha Gupta   |                1 |
+|         10 | Divya Reddy  |                1 |
+|          3 | Rohan Mehta  |                2 |
+|          4 | Ananya Singh |                2 |
+|          5 | Karan Patel  |                2 |
+|          6 | Sneha Iyer   |                2 |
+|          7 | Vikram Rao   |                2 |
+|          9 | Arjun Nair   |                2 |
+|          1 | Aarav Sharma |                3 |
+|          2 | Priya Verma  |                3 |
++------------+--------------+------------------+
+12 rows in set (0.000 sec)
+-- 7.5  LEFT JOIN: courses that nobody has enrolled in
+SELECT c.course_code, c.course_name
+FROM Course c
+LEFT JOIN Enrollment e ON e.course_id = c.course_id
+WHERE e.enrollment_id IS NULL
++-------------+-----------------+
+| course_code | course_name     |
++-------------+-----------------+
+| CLD302      | Cloud Computing |
++-------------+-----------------+
+1 row in set (0.000 sec)
+-- 7.6  Correlated subquery: enrollments graded above that course's own average
+SELECT c.course_code,
+       CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+       e.grade
+FROM Enrollment e
+INNER JOIN Student s ON s.student_id = e.student_id
+INNER JOIN Course c  ON c.course_id  = e.course_id
+WHERE e.grade > (SELECT AVG(e2.grade)
+                 FROM Enrollment e2
+                 WHERE e2.course_id = e.course_id)
+ORDER BY c.course_code, e.grade DESC
++-------------+--------------+-------+
+| course_code | student_name | grade |
++-------------+--------------+-------+
+| DBS101      | Priya Verma  | 95.00 |
+| DBS101      | Aarav Sharma | 88.50 |
+| DSA201      | Arjun Nair   | 89.00 |
+| JAV102      | Aarav Sharma | 92.00 |
+| JAV102      | Ananya Singh | 90.00 |
+| OPS301      | Vikram Rao   | 91.00 |
+| WEB202      | Neha Gupta   | 83.50 |
++-------------+--------------+-------+
+7 rows in set (0.000 sec)
+-- =====================================================================
+--  END OF SCRIPT
+-- =====================================================================
+Bye
